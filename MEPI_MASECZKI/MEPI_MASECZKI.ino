@@ -8,8 +8,8 @@
 #define PIN_CZUJNIK_2 3
 #define PIN_PRZYCISK 4
 
-//const char* ssid = "........";
-//const char* password = "........";
+const char* ssid = "........";
+const char* password = "........";
 
 //WebServer server(80);
 
@@ -49,20 +49,20 @@ void setup(void)
   pinMode(PIN_PRZYCISK, INPUT);
   
   Serial.begin(9600);
-  //WiFi.mode(WIFI_STA);
-  //WiFi.begin(ssid, password);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
   Serial.println("");
 
-  //// Wait for connection
-  //while (WiFi.status() != WL_CONNECTED) {
-    //delay(500);
-    //Serial.print(".");
-  //}
-  //Serial.println("");
-  //Serial.print("Connected to ");
-  //Serial.println(ssid);
-  //Serial.print("IP address: ");
-  //Serial.println(WiFi.localIP());
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 
   //if (MDNS.begin("esp32")) {
    // Serial.println("MDNS responder started");
