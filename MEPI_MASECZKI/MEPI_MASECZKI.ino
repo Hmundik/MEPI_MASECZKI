@@ -11,22 +11,19 @@
 const char* ssid = "........";
 const char* password = "........";
 
-//WebServer server(80);
+WebServer server(80);
 
 uint32_t timer_glowny = 0;
 int timer_mas_1 = 0;
 int timer_mas_2 = 0;
 
 
-/*
+
 void handleRoot() {
-  digitalWrite(led, 1);
   server.send(200, "text/plain", "hello from esp8266!");
-  digitalWrite(led, 0);
 }
 
 void handleNotFound() {
-  digitalWrite(led, 1);
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();
@@ -39,9 +36,8 @@ void handleNotFound() {
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
   server.send(404, "text/plain", message);
-  digitalWrite(led, 0);
 }
-*/
+
 void setup(void) 
 {
   pinMode(PIN_CZUJNIK_1, INPUT);
@@ -64,20 +60,20 @@ void setup(void)
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  //if (MDNS.begin("esp32")) {
-   // Serial.println("MDNS responder started");
-  //}
+  if (MDNS.begin("esp32")) {
+    Serial.println("MDNS responder started");
+  }
 
- // server.on("/", handleRoot);
+  server.on("/", handleRoot);
 
-  //server.on("/inline", []() {
-   // server.send(200, "text/plain", "this works as well");
-  //});
-//
-  //server.onNotFound(handleNotFound);
+  server.on("/inline", []() {
+    server.send(200, "text/plain", "this works as well");
+  });
 
- // server.begin();
-  //Serial.println("HTTP server started");
+  server.onNotFound(handleNotFound);
+
+  server.begin();
+  Serial.println("HTTP server started");
 }
 
 void loop(void) 
@@ -111,6 +107,7 @@ void loop(void)
     Serial.println(timer_mas_1);
     Serial.println(timer_mas_2);
     Serial.println();
+    server.handleClient();
     do 
     {
       timer_glowny += PERIOD;
@@ -118,5 +115,4 @@ void loop(void)
     } 
     while (timer_glowny < millis() - PERIOD);
   }
-  //server.handleClient();
 }
