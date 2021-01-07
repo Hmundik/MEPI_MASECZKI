@@ -20,7 +20,7 @@ int timer_mas_2 = 0;
 
 
 void handleRoot() {
-  server.send(200, "text/plain", "hello from esp8266!");
+  server.send(200, "text/plain", String(timer_mas_1)+"\n"+String(timer_mas_2));
 }
 
 void handleNotFound() {
@@ -65,10 +65,6 @@ void setup(void)
   }
 
   server.on("/", handleRoot);
-
-  server.on("/inline", []() {
-    server.send(200, "text/plain", "this works as well");
-  });
 
   server.onNotFound(handleNotFound);
 
