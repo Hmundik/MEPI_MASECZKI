@@ -3,24 +3,20 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 
-#define PERIOD 100
-#define PIN_CZUJNIK_1 2
-#define PIN_CZUJNIK_2 3
-#define PIN_PRZYCISK 4
+#define PIN_CZUJNIK_1 26
+#define PIN_CZUJNIK_2 25
+#define PIN_PRZYCISK 17
 
 const char* ssid = "........";
 const char* password = "........";
 
 WebServer server(80);
 
-uint32_t timer_glowny = 0;
 int timer_mas_1 = 0;
 int timer_mas_2 = 0;
 
-
-
 void handleRoot() {
-  server.send(200, "text/plain", String(timer_mas_1)+"\n"+String(timer_mas_2));
+  server.send(200, "text/plain", "hello from esp8266!");
 }
 
 void handleNotFound() {
@@ -44,14 +40,17 @@ void setup(void)
   pinMode(PIN_CZUJNIK_2, INPUT);
   pinMode(PIN_PRZYCISK, INPUT);
   
-  Serial.begin(9600);
+  Serial.begin(112500);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println("");
-
-  while (WiFi.status() != WL_CONNECTED) 
-  {
-    delay(500);
+  xTaskCreate(task1,"task1", 2048, NULL,1,NULL);
+  xTaskCreate(task2,"task2", 2048, NULL,2,NULL);
+  xTaskCreate(task3,"task3", 2048, NULL,2,NULL);
+ 
+  //// Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    vTaskDelay(500 / portTICK_PERIOD_MS);
     Serial.print(".");
   }
   Serial.println("");
@@ -72,43 +71,49 @@ void setup(void)
   Serial.println("HTTP server started");
 }
 
-void loop(void) 
+void loop() {}
+
+void task1( void * parameter)
 {
-  if (millis() - timer_glowny >= PERIOD) 
-  {
-    if(digitalRead(PIN_CZUJNIK_1)==0)
+  while(1){
+    if(digitalRead(PIN_CZUJNIK_1)==1)
     {
       timer_mas_1++;
     }
-    if(digitalRead(PIN_CZUJNIK_2)==0)
+    if(digitalRead(PIN_CZUJNIK_2)==1)
     {
       timer_mas_2++;
     }
-    if(digitalRead(PIN_PRZYCISK)==0)
+    Serial.print("Maseczki: ");
+    Serial.print(timer_mas_1);
+    Serial.print(" ");
+    Serial.print(timer_mas_2);
+    Serial.println();
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
+  
+}
+
+void task2(void * parameter)
+{
+  while(1)
+  {
+    if(digitalRead(PIN_PRZYCISK)==1)
     {
-      while((digitalRead(PIN_CZUJNIK_1)==1)&&(digitalRead(PIN_CZUJNIK_2)==1))
-      {
-        delay(100);
-      }
-      if (digitalRead(PIN_CZUJNIK_1)==0)
+      while((digitalRead(PIN_CZUJNIK_1)==0)&&(digitalRead(PIN_CZUJNIK_2)==0)){ };
+      if (digitalRead(PIN_CZUJNIK_1)==1)
       {
         timer_mas_1=0;
-        while(digitalRead(PIN_CZUJNIK_1)==0) delay(100);
-      } else
+      }
+      if(digitalRead(PIN_CZUJNIK_2)==1)
       {
         timer_mas_2=0;
-        while(digitalRead(PIN_CZUJNIK_2)==0) delay(100);
       }
     }
-    Serial.println(timer_mas_1);
-    Serial.println(timer_mas_2);
-    Serial.println();
-    server.handleClient();
-    do 
-    {
-      timer_glowny += PERIOD;
-      if (timer_glowny < PERIOD) break;
-    } 
-    while (timer_glowny < millis() - PERIOD);
   }
+}
+
+void task3(void * parameter)
+{
+  server.handleClient();
 }
