@@ -6,6 +6,9 @@
 #define PIN_CZUJNIK_1 26
 #define PIN_CZUJNIK_2 25
 #define PIN_PRZYCISK 17
+#define PIN_BUZZER 16
+
+#define TIMEMAS 10
 
 const char* ssid = "TP-LINK_nette";
 const char* password = "aw3se4dr5";
@@ -14,6 +17,8 @@ WebServer server(8081);
 
 int timer_mas_1 = 0;
 int timer_mas_2 = 0;
+char mas_ost_1 = 0;
+char mas_ost_2 = 0;
 
 void handleRoot() {
   String message = "";
@@ -45,6 +50,9 @@ void setup(void)
   pinMode(PIN_CZUJNIK_1, INPUT);
   pinMode(PIN_CZUJNIK_2, INPUT);
   pinMode(PIN_PRZYCISK, INPUT);
+  pinMode(PIN_BUZZER,OUTPUT);
+  digitalWrite(PIN_BUZZER,HIGH);
+  
   
   Serial.begin(112500);
   WiFi.mode(WIFI_STA);
@@ -86,11 +94,37 @@ void task1( void * parameter)
   while(1){
     if(digitalRead(PIN_CZUJNIK_1)==1)
     {
+      if((mas_ost_1==0)&&(timer_mas_1>TIMEMAS))
+      {
+        while(digitalRead(PIN_CZUJNIK_1)==1)
+        {
+          digitalWrite(PIN_BUZZER,LOW);
+          vTaskDelay(500 / portTICK_PERIOD_MS);
+        }
+        digitalWrite(PIN_BUZZER,HIGH);       
+      }
       timer_mas_1++;
+      mas_ost_1 = 1;
+    } else
+    {
+      mas_ost_1 = 0;
     }
     if(digitalRead(PIN_CZUJNIK_2)==1)
     {
+      if((mas_ost_2==0)&&(timer_mas_2>TIMEMAS))
+      {
+        while(digitalRead(PIN_CZUJNIK_2)==1)
+        {
+          digitalWrite(PIN_BUZZER,LOW);
+          vTaskDelay(500 / portTICK_PERIOD_MS);
+        }
+        digitalWrite(PIN_BUZZER,HIGH);       
+      }
       timer_mas_2++;
+      mas_ost_2 = 1;
+    } else
+    {
+      mas_ost_2 = 0;
     }
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
