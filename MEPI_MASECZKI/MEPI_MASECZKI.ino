@@ -7,17 +7,23 @@
 #define PIN_CZUJNIK_2 25
 #define PIN_PRZYCISK 17
 
-const char* ssid = "........";
-const char* password = "........";
+const char* ssid = "TP-LINK_nette";
+const char* password = "aw3se4dr5";
 
-WebServer server(80);
+WebServer server(8081);
 
 int timer_mas_1 = 0;
 int timer_mas_2 = 0;
 
 void handleRoot() {
-  server.send(200, "text/plain", "hello from esp8266!");
+  String message = "";
+  message += String(timer_mas_1);
+  message += "\n";
+  message += String(timer_mas_2);
+  message += "\n";
+  server.send(200, "text/plain", message);
 }
+
 
 void handleNotFound() {
   String message = "File Not Found\n\n";
@@ -44,11 +50,10 @@ void setup(void)
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println("");
-  xTaskCreate(task1,"task1", 2048, NULL,1,NULL);
-  xTaskCreate(task2,"task2", 2048, NULL,2,NULL);
-  xTaskCreate(task3,"task3", 2048, NULL,2,NULL);
+ 
  
   //// Wait for connection
+  Serial.println("Connectuig");
   while (WiFi.status() != WL_CONNECTED) {
     vTaskDelay(500 / portTICK_PERIOD_MS);
     Serial.print(".");
@@ -69,6 +74,9 @@ void setup(void)
 
   server.begin();
   Serial.println("HTTP server started");
+  xTaskCreate(task1,"task1", 10000, NULL,1,NULL);
+  xTaskCreate(task2,"task2", 10000, NULL,2,NULL);
+  xTaskCreate(task3,"task3", 10000, NULL,3,NULL);
 }
 
 void loop() {}
@@ -84,36 +92,33 @@ void task1( void * parameter)
     {
       timer_mas_2++;
     }
-    Serial.print("Maseczki: ");
-    Serial.print(timer_mas_1);
-    Serial.print(" ");
-    Serial.print(timer_mas_2);
-    Serial.println();
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
-  
 }
 
 void task2(void * parameter)
 {
   while(1)
   {
-    if(digitalRead(PIN_PRZYCISK)==1)
+    while(digitalRead(PIN_PRZYCISK)==0) {vTaskDelay(10 / portTICK_PERIOD_MS);};
+    while((digitalRead(PIN_CZUJNIK_1)==0)&&(digitalRead(PIN_CZUJNIK_2)==0)){vTaskDelay(10 / portTICK_PERIOD_MS);};
+    if (digitalRead(PIN_CZUJNIK_1)==1)
     {
-      while((digitalRead(PIN_CZUJNIK_1)==0)&&(digitalRead(PIN_CZUJNIK_2)==0)){ };
-      if (digitalRead(PIN_CZUJNIK_1)==1)
-      {
-        timer_mas_1=0;
-      }
-      if(digitalRead(PIN_CZUJNIK_2)==1)
-      {
-        timer_mas_2=0;
-      }
+      timer_mas_1=0;
     }
+    if(digitalRead(PIN_CZUJNIK_2)==1)
+    {
+      timer_mas_2=0;
+    }
+    while((digitalRead(PIN_CZUJNIK_1)==1)||(digitalRead(PIN_CZUJNIK_2)==1)){vTaskDelay(10 / portTICK_PERIOD_MS);};
   }
 }
 
 void task3(void * parameter)
 {
-  server.handleClient();
+  while(1)
+  {
+    server.handleClient();
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
 }
